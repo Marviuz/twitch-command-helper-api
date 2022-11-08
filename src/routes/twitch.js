@@ -3,6 +3,7 @@ const router = express.Router();
 const { createClip } = require('../utils/clip');
 const { shareToDiscord } = require('../utils/discord');
 const { getCurrentlySubbed, getBitsLeaderboard } = require('../utils/twitch');
+const shareToTwitter = require('../utils/twitter');
 
 // !so !shoutout
 router.get('/shoutout/:name/:game', (req, res) => {
@@ -31,16 +32,10 @@ router.get('/clip/:code/:channel/:dcServer/:dcChannel/:clipper', async (req, res
     const clipURL = await createClip(code, channel);
 
     if (clipURL.match(/^http/gm)) { // If it's a link, share it to discord
-      shareToDiscord(clipURL, webhook, clipper)
-        .then(() => {
-          console.log('Discord share successful');
-          res.send(`${clipURL} also shared to discord! Refine edit the clip at ${clipURL}/edit`);
-        })
-        .catch(err => {
-          console.error('shareToDiscord thenable Something went wrong');
-          res.send('Discord share failed');
-          throw new Error(err);
-        });
+      const dscShare = await shareToDiscord(clipURL, webhook, clipper);
+      const twtShare = await shareToTwitter(`Clipped by ${clipper}\nThis message is bot generated!\n${clipURL}`);
+      if (dscShare) res.send(`@${clipper} ${clipURL} also shared at Discord & Twitter! ${twtShare}`);
+      else res.send(`@${clipper} ${clipURL} also Twitter! ${twtShare}, unfortunately share to Discord failed!`);
     } else { // If not, only share the message
       res.send(`${clipURL} Try it again!`);
     }

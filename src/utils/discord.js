@@ -11,8 +11,7 @@ const shareToDiscord = async (clip, webhook, clipper) => {
       data: JSON.stringify({ content: `New clip by **${clipper}**: ${clip}` })
     });
   } catch (err) {
-    console.error('shareToDiscord ERROR');
-    throw new Error(err);
+    return new Error(err);
   }
 };
 
